@@ -1,4 +1,4 @@
-A pure java Vcdiff patch implement. <br />
+A pure java Vcdiff decoder implement. <br />
 
 
 @see RFC 3284 - The VCDIFF Generic Differencing and Compression Data <br />
