@@ -4,7 +4,8 @@ import java.io.IOException;
 
 /**
  * Wraps a SeekableStream with given offset and length.
- *
+ * TODO: check if read/write exceed bounds.
+ *  
  * @author dongliu
  *
  */
@@ -58,6 +59,21 @@ public class SlicedSeekableStream implements SeekableStream {
     @Override
     public void write(byte b) throws IOException {
         this.ss.write(b);
+    }
+
+    @Override
+    public SeekableStream asReadonly() {
+        return new SlicedSeekableStream(ss.asReadonly(), this.sOffset, this.slength);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return ss.isReadOnly();
+    }
+
+    @Override
+    public int read() throws IOException {
+        return this.ss.read();
     }
     
 }

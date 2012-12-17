@@ -2,11 +2,13 @@ package com.wandoujia.mms.patch.vcdiff;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
 /**
- * For sources of random-access data, such as {@link RandomAccessFile}.
+ * A stream has seek , length and pos method.(so it is NOT a stream in fact).
+ *
+ * @author dongliu
+ *
  */
 public interface SeekableStream extends Closeable {
     
@@ -29,5 +31,20 @@ public interface SeekableStream extends Closeable {
     void write(byte b) throws IOException;
     
     long length() throws IOException;
+    
+    /**
+     * get a readonly view from origin stream.
+     * 
+     * @return
+     */
+    SeekableStream asReadonly();
+    
+    /**
+     * is readOnly?
+     * @return
+     */
+    boolean isReadOnly();
+
+    int read() throws IOException;
     
 }

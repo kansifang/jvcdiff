@@ -1,11 +1,7 @@
 package com.wandoujia.mms.patch.vcdiff;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
 
 import com.wandoujia.mms.patch.vcdiff.Instruction.InstructionType;
 
@@ -19,7 +15,7 @@ public class VcdiffDecoder {
 
     private SeekableStream originStream;
 
-    private InputStream patchStream;
+    private SeekableStream patchStream;
 
     private SeekableStream targetStream;
 
@@ -28,7 +24,7 @@ public class VcdiffDecoder {
 
     private AddressCache cache = new AddressCache(4, 3);
 
-    public VcdiffDecoder(SeekableStream originStream, InputStream patchStream,
+    public VcdiffDecoder(SeekableStream originStream, SeekableStream patchStream,
             SeekableStream targetStream) {
         this.originStream = originStream;
         this.patchStream = patchStream;
@@ -45,11 +41,9 @@ public class VcdiffDecoder {
      */
     public static void patch(File originFile, File patchFile, File targetFile)
             throws IOException, PatchException {
-        SeekableStream originStream = new FileSeekableStream(
-                new RandomAccessFile(originFile, "r"));
-        InputStream patchStream = new FileInputStream(patchFile);
-        SeekableStream targetStream = new FileSeekableStream(
-                new RandomAccessFile(targetFile, "rw"));;
+        SeekableStream originStream = new FileSeekableStream(originFile, true);
+        SeekableStream patchStream = new FileSeekableStream(patchFile, true);
+        SeekableStream targetStream = new FileSeekableStream(targetFile);
         try {
             decode(originStream, patchStream, targetStream);
         } finally {
@@ -61,7 +55,7 @@ public class VcdiffDecoder {
     }
 
     public static void decode(SeekableStream originStream,
-            InputStream patchStream, SeekableStream targetStream)
+            SeekableStream patchStream, SeekableStream targetStream)
             throws IOException, PatchException {
         VcdiffDecoder decoder = new VcdiffDecoder(originStream, patchStream,
                 targetStream);
@@ -128,8 +122,8 @@ public class VcdiffDecoder {
         byte[] defaultTableData = CodeTable.Default.getBytes();
 
         SeekableStream tableOriginal = new ByteArraySeekableStream(
-                defaultTableData);
-        InputStream tableDelta = new ByteArrayInputStream(compressedTableData);
+                defaultTableData, true);
+        SeekableStream tableDelta = new ByteArraySeekableStream(compressedTableData, true);
         byte[] decompressedTableData = new byte[1536];
         SeekableStream tableOutput = new ByteArraySeekableStream(decompressedTableData);
         VcdiffDecoder.decode(tableOriginal, tableDelta, tableOutput);
@@ -142,8 +136,6 @@ public class VcdiffDecoder {
     }
 
     private boolean decodeWindow() throws IOException, PatchException {
-        
-        System.out.println("decode window..");
         
         int windowIndicator = patchStream.read();
         // finished.
@@ -195,7 +187,6 @@ public class VcdiffDecoder {
             sourceStream.seek(sourcePos);
             
             if (sourceLen + sourcePos > sourceStream.length()) {
-                System.out.println("source, pos:" + sourcePos +", length:" + sourceLen);
                 sourceData = IOUtils.readBytes(sourceStream, (int) (sourceStream.length() - sourcePos));
             }else{
                 sourceData = IOUtils.readBytes(sourceStream, sourceLen);
@@ -213,7 +204,6 @@ public class VcdiffDecoder {
 
         //  Length of the target window.the actual size of the target window after decompression
         int targetLen = IOUtils.read7bitIntBE(patchStream);
-        System.out.println("Target length:" + targetLen);
 
         // Delta_Indicator.
         int deltaIndicator = IOUtils.readByte(patchStream);
@@ -249,7 +239,7 @@ public class VcdiffDecoder {
 
         int addRunDataIndex = 0;
 
-        InputStream instructionStream = new ByteArrayInputStream(instructions);
+        SeekableStream instructionStream = new ByteArraySeekableStream(instructions, true);
 
         cache.reset(addresses);
 
@@ -315,5 +305,6 @@ public class VcdiffDecoder {
     }
 
     private void check(int checksumInFile, byte[] targetData) {
+        //TODO: adler32 check.
     }
 }

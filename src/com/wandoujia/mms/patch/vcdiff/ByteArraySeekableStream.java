@@ -13,12 +13,22 @@ public class ByteArraySeekableStream implements SeekableStream {
     private byte[] data;
     private long pos;
     
+    private boolean readOnly;
+    
     /**
      * Constructs a new ByteArraySeekableSource.
      */
     public ByteArraySeekableStream(byte[] source) {
+        this(source, false);
+    }
+    
+    /**
+     * Constructs a new ByteArraySeekableSource.
+     */
+    public ByteArraySeekableStream(byte[] source, boolean readOnly) {
         this.data = source;
         this.pos = 0;
+        this.readOnly = readOnly;
     }
     
     @Override
@@ -64,6 +74,9 @@ public class ByteArraySeekableStream implements SeekableStream {
 
     @Override
     public void write(byte[] data, int offset, int length) {
+        if (readOnly) {
+            throw new UnsupportedOperationException();
+        }
         if (data == null) {
             throw new NullPointerException();
         }
@@ -85,6 +98,9 @@ public class ByteArraySeekableStream implements SeekableStream {
 
     @Override
     public void write(byte b) {
+        if (readOnly) {
+            throw new UnsupportedOperationException();
+        }
         if (pos >= this.data.length){
             throw new IndexOutOfBoundsException();
         }
@@ -95,6 +111,24 @@ public class ByteArraySeekableStream implements SeekableStream {
     @Override
     public long length() throws IOException {
         return this.data.length;
+    }
+
+    @Override
+    public SeekableStream asReadonly() {
+        return new ByteArraySeekableStream(data, true);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return this.readOnly;
+    }
+
+    @Override
+    public int read() {
+        if (pos >= this.data.length) {
+            return -1;
+        }
+        return this.data[(int) pos++] & 0xff;
     }
     
 }

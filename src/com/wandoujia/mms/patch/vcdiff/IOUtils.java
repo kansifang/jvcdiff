@@ -39,8 +39,8 @@ public class IOUtils {
      * @return
      * @throws IOException
      */
-    public static int readByte(InputStream is) throws IOException {
-        int byti = is.read();
+    public static int readByte(SeekableStream ss) throws IOException {
+        int byti = ss.read();
         if (byti == -1) {
             // end of is
             throw new IndexOutOfBoundsException("Not enough data in inputstream.");
@@ -53,10 +53,10 @@ public class IOUtils {
      * @return
      * @throws IOException 
      */
-    public static int read7bitIntBE(InputStream is) throws IOException {
+    public static int read7bitIntBE(SeekableStream ss) throws IOException {
         int ret = 0;
         for (int i = 0; i < 5; i++) {
-            int b = is.read();
+            int b = ss.read();
             if (b == -1) {
                 throw new IndexOutOfBoundsException(
                         "Not enough data in inputstream.");

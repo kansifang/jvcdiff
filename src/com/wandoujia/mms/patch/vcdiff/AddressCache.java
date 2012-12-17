@@ -1,8 +1,6 @@
 package com.wandoujia.mms.patch.vcdiff;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -31,7 +29,7 @@ public class AddressCache {
      */
     private int[] same;
 
-    private InputStream addressStream;
+    private SeekableStream addressStream;
 
     public AddressCache(int nearSize, int sameSize) {
         this.nearSize = nearSize;
@@ -45,7 +43,7 @@ public class AddressCache {
         Arrays.fill(near, 0);
         Arrays.fill(same, 0);
 
-        addressStream = new ByteArrayInputStream(addresses);
+        addressStream = new ByteArraySeekableStream(addresses, true);
     }
 
     /**
