@@ -121,11 +121,11 @@ public class VcdiffDecoder {
 
         byte[] defaultTableData = CodeTable.Default.getBytes();
 
-        SeekableStream tableOriginal = new ByteArraySeekableStream(
+        SeekableStream tableOriginal = new ByteBufferSeekableStream(
                 defaultTableData, true);
-        SeekableStream tableDelta = new ByteArraySeekableStream(compressedTableData, true);
+        SeekableStream tableDelta = new ByteBufferSeekableStream(compressedTableData, true);
         byte[] decompressedTableData = new byte[1536];
-        SeekableStream tableOutput = new ByteArraySeekableStream(decompressedTableData);
+        SeekableStream tableOutput = new ByteBufferSeekableStream(decompressedTableData);
         VcdiffDecoder.decode(tableOriginal, tableDelta, tableOutput);
         if (tableOutput.pos() != 1536) {
             throw new PatchException("Compressed code table was incorrect size");
@@ -137,6 +137,8 @@ public class VcdiffDecoder {
 
     private boolean decodeWindow() throws IOException, PatchException {
         
+        boolean shareData = true;
+        
         int windowIndicator = patchStream.read();
         // finished.
         if (windowIndicator == -1) {
@@ -145,7 +147,7 @@ public class VcdiffDecoder {
 
         SeekableStream sourceStream;
         
-        long tempTargetStreamPos = -1;
+        int tempTargetStreamPos = -1;
 
         // xdelta3 uses an undocumented extra bit which indicates that there are
         // an extra 4 bytes at the end of the encoding for the window
@@ -178,26 +180,30 @@ public class VcdiffDecoder {
         }
 
         // Read the source data, if any
-        byte[] sourceData = null;
+        SeekableStream sourceData = null;
         int sourceLen = 0;
+        // xdelta 有时生成的diff，sourceLen会大于实际可用的大小.
+        int realSourceLen = 0;
         if (sourceStream != null) {
             sourceLen = IOUtils.read7bitIntBE(patchStream);
             int sourcePos = IOUtils.read7bitIntBE(patchStream);
             
             sourceStream.seek(sourcePos);
             
+            realSourceLen = sourceLen;
+            
             if (sourceLen + sourcePos > sourceStream.length()) {
-                sourceData = IOUtils.readBytes(sourceStream, (int) (sourceStream.length() - sourcePos));
-            }else{
-                sourceData = IOUtils.readBytes(sourceStream, sourceLen);
+                realSourceLen = sourceStream.length() - sourcePos;
             }
+            
+            sourceData = IOUtils.getStreamView(sourceStream, realSourceLen, shareData);
             
             // restore the position the source stream if appropriate
             if (tempTargetStreamPos != -1) {
                 targetStream.seek(tempTargetStreamPos);
             }
         }
-        sourceStream = null;
+        //sourceStream = null;
 
         // Length of the delta encoding
         IOUtils.read7bitIntBE(patchStream);
@@ -212,7 +218,7 @@ public class VcdiffDecoder {
         }
         
         byte[] targetData = new byte[targetLen];
-        SeekableStream targetDataStream = new ByteArraySeekableStream(targetData);
+        SeekableStream targetDataStream = new ByteBufferSeekableStream(targetData);
         
         // Length of data for ADDs and RUNs
         int addRunDataLen = IOUtils.read7bitIntBE(patchStream);
@@ -239,7 +245,7 @@ public class VcdiffDecoder {
 
         int addRunDataIndex = 0;
 
-        SeekableStream instructionStream = new ByteArraySeekableStream(instructions, true);
+        SeekableStream instructionStream = new ByteBufferSeekableStream(instructions, true);
 
         cache.reset(addresses);
 
@@ -264,10 +270,11 @@ public class VcdiffDecoder {
                         break;
                     case COPY:
                         int addr = cache.decodeAddress(
-                                (int) targetDataStream.pos() + sourceLen,
+                                targetDataStream.pos() + sourceLen,
                                 instruction.getMode());
-                        if (sourceData != null && addr < sourceData.length) {
-                            targetDataStream.write(sourceData, addr, size);
+                        if (sourceData != null && addr < realSourceLen) {
+                            sourceData.seek(addr);
+                            IOUtils.copy(sourceData, targetDataStream, size);
                         } else {
                             // Data is in target data
                             // Get rid of the offset

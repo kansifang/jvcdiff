@@ -94,6 +94,23 @@ public class IOUtils {
     }
     
     /**
+     * 从stream中获得一个指定大小为length，从当前pos处开始的stream.
+     * 副作用：ss的postion会增加length.
+     * @param ss
+     * @return
+     * @throws IOException 
+     */
+    public static SeekableStream getStreamView(SeekableStream ss, int length, 
+            boolean shareData) throws IOException{
+        if (shareData){
+            return ss.slice(length);
+        } else {
+            byte[] bytes = IOUtils.readBytes(ss, length);
+            return new ByteBufferSeekableStream(bytes, true);
+        }
+    }
+    
+    /**
      * close queitly.
      * @param closeable
      */
@@ -104,5 +121,11 @@ public class IOUtils {
         try {
             closeable.close();
         } catch (IOException ignore) {}
+    }
+
+    public static void copy(SeekableStream sourceStream,
+            SeekableStream targetDataStream, int size) throws IOException {
+        byte[] bytes = readBytes(sourceStream, size);
+        targetDataStream.write(bytes, 0, bytes.length);
     }
 }

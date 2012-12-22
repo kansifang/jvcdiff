@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * Wraps a random access file.
@@ -39,12 +41,12 @@ public class FileSeekableStream implements SeekableStream {
         }
     }
 
-    public void seek(long pos) throws IOException {
+    public void seek(int pos) throws IOException {
         raf.seek(pos);
     }
     
-    public long pos() throws IOException{
-        return raf.getFilePointer();
+    public int pos() throws IOException{
+        return (int) raf.getFilePointer();
     }
 
     @Override
@@ -53,8 +55,8 @@ public class FileSeekableStream implements SeekableStream {
     }
 
     @Override
-    public long length() throws IOException {
-        return raf.length();
+    public int length() throws IOException {
+        return (int) raf.length();
     }
 
     @Override
@@ -97,5 +99,16 @@ public class FileSeekableStream implements SeekableStream {
     public int read() throws IOException {
         return this.raf.read();
     }
+
+    @Override
+    public SeekableStream slice(int offset) throws IOException {
+        // use bytebuffer to slice.
+        // this strategy is SPECIALLY for jvcdiff use.
+        FileChannel fc = this.raf.getChannel();
+        MappedByteBuffer buffer = fc.map(FileChannel.MapMode.READ_ONLY,
+                this.raf.getFilePointer(), offset);
+        return new ByteBufferSeekableStream(buffer);
+    }
+
     
 }

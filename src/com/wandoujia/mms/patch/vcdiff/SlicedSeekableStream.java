@@ -12,14 +12,14 @@ import java.io.IOException;
 public class SlicedSeekableStream implements SeekableStream {
     
     private SeekableStream ss;
-    private long sOffset;
-    private long slength;
+    private int sOffset;
+    private int slength;
     
     /**
      * Constructs a new RandomAccessFileSeekableSource.
      * @param raf
      */
-    public SlicedSeekableStream(SeekableStream ss, long offset, long length) {
+    public SlicedSeekableStream(SeekableStream ss, int offset, int length) {
         if (ss == null) {
             throw new NullPointerException();
         }
@@ -28,11 +28,11 @@ public class SlicedSeekableStream implements SeekableStream {
         this.slength = length;
     }
 
-    public void seek(long pos) throws IOException {
+    public void seek(int pos) throws IOException {
         ss.seek(sOffset + pos);
     }
     
-    public long pos() throws IOException{
+    public int pos() throws IOException{
         return ss.pos() - sOffset;
     }
 
@@ -42,7 +42,7 @@ public class SlicedSeekableStream implements SeekableStream {
     }
 
     @Override
-    public long length() throws IOException {
+    public int length() throws IOException {
         return this.slength;
     }
 
@@ -74,6 +74,11 @@ public class SlicedSeekableStream implements SeekableStream {
     @Override
     public int read() throws IOException {
         return this.ss.read();
+    }
+
+    @Override
+    public SeekableStream slice(int length) throws IOException {
+        return new SlicedSeekableStream(this, ss.pos(), length);
     }
     
 }

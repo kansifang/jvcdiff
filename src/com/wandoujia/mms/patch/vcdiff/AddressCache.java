@@ -43,7 +43,7 @@ public class AddressCache {
         Arrays.fill(near, 0);
         Arrays.fill(same, 0);
 
-        addressStream = new ByteArraySeekableStream(addresses, true);
+        addressStream = new ByteBufferSeekableStream(addresses, true);
     }
 
     /**
