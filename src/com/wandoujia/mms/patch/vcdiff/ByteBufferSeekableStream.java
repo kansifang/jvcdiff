@@ -115,10 +115,14 @@ public class ByteBufferSeekableStream implements SeekableStream {
 
     @Override
     public SeekableStream slice(int offset) {
+        if (offset > this.buffer.remaining()) {
+            throw new BufferUnderflowException();
+        }
         int limit = this.buffer.limit();
         this.buffer.limit(this.buffer.position() + offset);
         ByteBuffer newBuffer = this.buffer.slice();
         this.buffer.limit(limit);
+        this.buffer.position(this.buffer.position() + offset);
         return new ByteBufferSeekableStream(newBuffer);
     }
 }

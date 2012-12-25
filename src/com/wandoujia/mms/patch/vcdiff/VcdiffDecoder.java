@@ -24,6 +24,8 @@ public class VcdiffDecoder {
 
     private AddressCache cache = new AddressCache(4, 3);
 
+    private boolean memorySaving;
+
     public VcdiffDecoder(SeekableStream originStream, SeekableStream patchStream,
             SeekableStream targetStream) {
         this.originStream = originStream;
@@ -41,11 +43,24 @@ public class VcdiffDecoder {
      */
     public static void patch(File originFile, File patchFile, File targetFile)
             throws IOException, PatchException {
+        patch(originFile, patchFile, targetFile, false);
+    }
+    
+    /**
+     * Apply vcdiff patch fiel to originFile.
+     * @param originFile
+     * @param patchFile
+     * @param targetFile
+     * @throws IOException
+     * @throws PatchException
+     */
+    public static void patch(File originFile, File patchFile, File targetFile,
+            boolean memorySaving) throws IOException, PatchException {
         SeekableStream originStream = new FileSeekableStream(originFile, true);
         SeekableStream patchStream = new FileSeekableStream(patchFile, true);
         SeekableStream targetStream = new FileSeekableStream(targetFile);
         try {
-            decode(originStream, patchStream, targetStream);
+            decode(originStream, patchStream, targetStream, memorySaving);
         } finally {
             // close xxxx
             IOUtils.closeQueitly(originStream);
@@ -54,11 +69,12 @@ public class VcdiffDecoder {
         }
     }
 
-    public static void decode(SeekableStream originStream,
-            SeekableStream patchStream, SeekableStream targetStream)
+    public static void decode(SeekableStream originStream, SeekableStream patchStream, 
+            SeekableStream targetStream, boolean memorySaving)
             throws IOException, PatchException {
         VcdiffDecoder decoder = new VcdiffDecoder(originStream, patchStream,
                 targetStream);
+        decoder.memorySaving = memorySaving;
         decoder.decode();
     }
 
@@ -126,7 +142,7 @@ public class VcdiffDecoder {
         SeekableStream tableDelta = new ByteBufferSeekableStream(compressedTableData, true);
         byte[] decompressedTableData = new byte[1536];
         SeekableStream tableOutput = new ByteBufferSeekableStream(decompressedTableData);
-        VcdiffDecoder.decode(tableOriginal, tableDelta, tableOutput);
+        VcdiffDecoder.decode(tableOriginal, tableDelta, tableOutput, true);
         if (tableOutput.pos() != 1536) {
             throw new PatchException("Compressed code table was incorrect size");
         }
@@ -136,8 +152,6 @@ public class VcdiffDecoder {
     }
 
     private boolean decodeWindow() throws IOException, PatchException {
-        
-        boolean shareData = true;
         
         int windowIndicator = patchStream.read();
         // finished.
@@ -196,7 +210,7 @@ public class VcdiffDecoder {
                 realSourceLen = sourceStream.length() - sourcePos;
             }
             
-            sourceData = IOUtils.getStreamView(sourceStream, realSourceLen, shareData);
+            sourceData = IOUtils.getStreamView(sourceStream, realSourceLen, memorySaving);
             
             // restore the position the source stream if appropriate
             if (tempTargetStreamPos != -1) {
@@ -237,13 +251,11 @@ public class VcdiffDecoder {
         }
 
         // Data section for ADDs and RUNs 
-        byte[] addRunData = IOUtils.readBytes(patchStream, addRunDataLen);
+        SeekableStream addRunData = IOUtils.getStreamView(patchStream, addRunDataLen, memorySaving);
         // Instructions and sizes section
         byte[] instructions = IOUtils.readBytes(patchStream, instructionsLen);
         // Addresses section for COPYs
         byte[] addresses = IOUtils.readBytes(patchStream, addressesLen);
-
-        int addRunDataIndex = 0;
 
         SeekableStream instructionStream = new ByteBufferSeekableStream(instructions, true);
 
@@ -265,8 +277,7 @@ public class VcdiffDecoder {
                     case NO_OP:
                         break;
                     case ADD:
-                        targetDataStream.write(addRunData, addRunDataIndex, size);
-                        addRunDataIndex += size;
+                        IOUtils.copy(addRunData, targetDataStream, size);
                         break;
                     case COPY:
                         int addr = cache.decodeAddress(
@@ -290,7 +301,7 @@ public class VcdiffDecoder {
                         }
                         break;
                     case RUN:
-                        byte data = addRunData[addRunDataIndex++];
+                        byte data = (byte) IOUtils.readByte(addRunData);
                         for (int j = 0; j < size; j++) {
                             targetDataStream.write(data);
                         }
@@ -301,6 +312,8 @@ public class VcdiffDecoder {
             }
         }
         IOUtils.closeQueitly(targetDataStream);
+        IOUtils.closeQueitly(addRunData);
+        IOUtils.closeQueitly(sourceData);
         targetStream.write(targetData, 0, targetLen);
 
         if (hasAdler32Checksum) {

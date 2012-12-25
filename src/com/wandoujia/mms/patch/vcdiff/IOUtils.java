@@ -105,7 +105,7 @@ public class IOUtils {
         if (shareData){
             return ss.slice(length);
         } else {
-            byte[] bytes = IOUtils.readBytes(ss, length);
+            byte[] bytes = readBytes(ss, length);
             return new ByteBufferSeekableStream(bytes, true);
         }
     }

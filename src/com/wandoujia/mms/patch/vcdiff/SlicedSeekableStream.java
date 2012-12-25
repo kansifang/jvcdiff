@@ -78,6 +78,7 @@ public class SlicedSeekableStream implements SeekableStream {
 
     @Override
     public SeekableStream slice(int length) throws IOException {
+        seek(pos() + length);
         return new SlicedSeekableStream(this, ss.pos(), length);
     }
     

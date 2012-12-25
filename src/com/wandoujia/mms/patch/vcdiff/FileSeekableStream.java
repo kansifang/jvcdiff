@@ -101,12 +101,13 @@ public class FileSeekableStream implements SeekableStream {
     }
 
     @Override
-    public SeekableStream slice(int offset) throws IOException {
+    public SeekableStream slice(int length) throws IOException {
         // use bytebuffer to slice.
         // this strategy is SPECIALLY for jvcdiff use.
         FileChannel fc = this.raf.getChannel();
         MappedByteBuffer buffer = fc.map(FileChannel.MapMode.READ_ONLY,
-                this.raf.getFilePointer(), offset);
+                this.raf.getFilePointer(), length);
+        this.raf.seek(this.raf.getFilePointer() + length);
         return new ByteBufferSeekableStream(buffer);
     }
 
