@@ -1,4 +1,8 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.codetable;
+
+import net.dongliu.jvcdiff.vcdiff.io.ByteBufferSeekableStream;
+import net.dongliu.jvcdiff.vcdiff.io.IOUtils;
+import net.dongliu.jvcdiff.vcdiff.io.SeekableStream;
 
 import java.io.IOException;
 import java.util.Arrays;

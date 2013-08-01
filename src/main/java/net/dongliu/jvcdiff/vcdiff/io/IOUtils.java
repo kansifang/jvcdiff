@@ -1,9 +1,11 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.io;
+
+import net.dongliu.jvcdiff.vcdiff.io.ByteBufferSeekableStream;
+import net.dongliu.jvcdiff.vcdiff.io.SeekableStream;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 
 /**
  * IOUtils form vcdiff.
@@ -33,7 +35,7 @@ public class IOUtils {
         }
         return data;
     }
-    
+
     /**
      * read one byte from inputstream.
      * @return
@@ -57,6 +59,29 @@ public class IOUtils {
         int ret = 0;
         for (int i = 0; i < 5; i++) {
             int b = ss.read();
+            if (b == -1) {
+                throw new IndexOutOfBoundsException(
+                        "Not enough data in inputstream.");
+            }
+            ret = (ret << 7) | (b & 0x7f);
+            // end of int encoded.
+            if ((b & 0x80) == 0) {
+                return ret;
+            }
+        }
+        // Still haven't seen a byte with the high bit unset? Dodgy data.
+        throw new IOException("Invalid 7-bit encoded integer in stream.");
+    }
+
+    /**
+     * read 7 bit enconded int.by bigendian.
+     * @return
+     * @throws IOException
+     */
+    public static int read7bitIntBE(InputStream is) throws IOException {
+        int ret = 0;
+        for (int i = 0; i < 5; i++) {
+            int b = is.read();
             if (b == -1) {
                 throw new IndexOutOfBoundsException(
                         "Not enough data in inputstream.");
@@ -100,8 +125,7 @@ public class IOUtils {
      * @return
      * @throws IOException 
      */
-    public static SeekableStream getStreamView(SeekableStream ss, int length, 
-            boolean shareData) throws IOException{
+    public static SeekableStream getStreamView(SeekableStream ss, int length, boolean shareData) throws IOException{
         if (shareData){
             return ss.slice(length);
         } else {
@@ -123,8 +147,8 @@ public class IOUtils {
         } catch (IOException ignore) {}
     }
 
-    public static void copy(SeekableStream sourceStream,
-            SeekableStream targetDataStream, int size) throws IOException {
+    public static void copy(SeekableStream sourceStream, SeekableStream targetDataStream, int size)
+            throws IOException {
         byte[] bytes = readBytes(sourceStream, size);
         targetDataStream.write(bytes, 0, bytes.length);
     }

@@ -1,4 +1,4 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.io;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 
 /**
  * A stream has seek , length and pos method.(so it is NOT a stream in fact).
- * 注意因为方便的原因，参数都是int，对于文件的大小有限制.
  * @author dongliu
  *
  */

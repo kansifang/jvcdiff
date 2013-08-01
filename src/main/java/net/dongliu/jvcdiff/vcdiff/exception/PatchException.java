@@ -1,4 +1,4 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.exception;
 
 /**
  * jvcdiff vcdiff exception.

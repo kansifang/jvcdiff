@@ -1,6 +1,6 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.codetable;
 
-import net.dongliu.jvcdiff.vcdiff.Instruction.InstructionType;
+import net.dongliu.jvcdiff.vcdiff.codetable.Instruction.InstructionType;
 
 /**
  * vcdiff instruction table.

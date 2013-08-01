@@ -1,4 +1,4 @@
-package net.dongliu.jvcdiff.vcdiff;
+package net.dongliu.jvcdiff.vcdiff.io;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;
