@@ -1,6 +1,6 @@
-package com.wandoujia.mms.patch.vcdiff;
+package net.dongliu.jvcdiff.vcdiff;
 
-import com.wandoujia.mms.patch.vcdiff.Instruction.InstructionType;
+import net.dongliu.jvcdiff.vcdiff.Instruction.InstructionType;
 
 /**
  * vcdiff instruction table.

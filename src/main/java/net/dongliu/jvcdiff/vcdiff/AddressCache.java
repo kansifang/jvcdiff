@@ -1,4 +1,4 @@
-package com.wandoujia.mms.patch.vcdiff;
+package net.dongliu.jvcdiff.vcdiff;
 
 import java.io.IOException;
 import java.util.Arrays;

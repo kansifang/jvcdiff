@@ -1,7 +1,7 @@
-package com.wandoujia.mms.patch.vcdiff;
+package net.dongliu.jvcdiff.vcdiff;
 
 /**
- * patch vcdiff exception.
+ * jvcdiff vcdiff exception.
  * 
  * @author dongliu
  */

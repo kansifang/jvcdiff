@@ -1,8 +1,9 @@
-package com.wandoujia.mms.patch.vcdiff;
+package net.dongliu.jvcdiff.vcdiff;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 /**
  * IOUtils form vcdiff.
@@ -35,7 +36,6 @@ public class IOUtils {
     
     /**
      * read one byte from inputstream.
-     * @param is
      * @return
      * @throws IOException
      */
@@ -127,5 +127,51 @@ public class IOUtils {
             SeekableStream targetDataStream, int size) throws IOException {
         byte[] bytes = readBytes(sourceStream, size);
         targetDataStream.write(bytes, 0, bytes.length);
+    }
+
+    /**
+     * bytes to int.
+     * @return
+     */
+    public static int makeInt(byte b3, byte b2, byte b1, byte b0) {
+        return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
+    }
+
+    /**
+     * bytes to short.
+     * @return
+     */
+    public static short makeShort(byte b1, byte b0) {
+        return (short) (((b1 & 0xff) << 8) | ((b0 & 0xff)));
+    }
+
+    /**
+     * read int, Big-endian.
+     * @return
+     */
+    public static int makeIntB(byte[] ba, int pos) {
+        if (ba == null || ba.length < 4 + pos) {
+            throw new IllegalArgumentException("Need at lease four bytes.");
+        }
+        return makeInt(ba[pos + 0], ba[pos + 1], ba[pos + 2], ba[pos + 3]);
+    }
+
+    /**
+     * read int, Small-endian.
+     * @return
+     */
+    public static int makeIntS(byte[] ba, int pos) {
+        if (ba == null || ba.length < 4 + pos) {
+            throw new IllegalArgumentException("Need at lease four bytes.");
+        }
+        return makeInt(ba[pos + 3], ba[pos + 2], ba[pos + 1], ba[pos]);
+    }
+
+
+    public static short makeShortS(byte[] ba, int pos) {
+        if (ba == null || ba.length < 2 + pos) {
+            throw new IllegalArgumentException("Need at lease two bytes.");
+        }
+        return makeShort(ba[pos + 1], ba[pos]);
     }
 }

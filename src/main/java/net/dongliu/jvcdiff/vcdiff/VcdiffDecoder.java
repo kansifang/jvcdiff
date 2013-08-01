@@ -1,9 +1,9 @@
-package com.wandoujia.mms.patch.vcdiff;
+package net.dongliu.jvcdiff.vcdiff;
 
 import java.io.File;
 import java.io.IOException;
 
-import com.wandoujia.mms.patch.vcdiff.Instruction.InstructionType;
+import net.dongliu.jvcdiff.vcdiff.Instruction.InstructionType;
 
 /**
  * vcdiff decode.
@@ -34,7 +34,7 @@ public class VcdiffDecoder {
     }
 
     /**
-     * Apply vcdiff patch fiel to originFile.
+     * Apply vcdiff jvcdiff fiel to originFile.
      * @param originFile
      * @param patchFile
      * @param targetFile
@@ -47,7 +47,7 @@ public class VcdiffDecoder {
     }
     
     /**
-     * Apply vcdiff patch fiel to originFile.
+     * Apply vcdiff jvcdiff fiel to originFile.
      * @param originFile
      * @param patchFile
      * @param targetFile
@@ -86,8 +86,8 @@ public class VcdiffDecoder {
     private void readHeader() throws IOException, PatchException {
         byte[] magic = IOUtils.readBytes(patchStream, 4);
         if (magic[0] != (byte)0xd6 || magic[1] != (byte)0xc3 || magic[2] != (byte)0xc4) {
-            // not vcdiff patch file.
-            throw new PatchException("The patch file is Not vcdiff file.");
+            // not vcdiff jvcdiff file.
+            throw new PatchException("The jvcdiff file is Not vcdiff file.");
         }
         if (magic[3] != 0) {
             // version num.now is always 0.
